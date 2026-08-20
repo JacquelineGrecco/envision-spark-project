@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/agenda")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: Agenda;
+  component: Agenda,
 });
 
 function Agenda() {
