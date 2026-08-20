@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedPacientesRouteImport } from './routes/_authenticated/pacientes'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedPacientesPatientIdRouteImport } from './routes/_authenticated/pacientes_.$patientId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +46,12 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPacientesPatientIdRoute =
+  AuthenticatedPacientesPatientIdRouteImport.update({
+    id: '/pacientes_/$patientId',
+    path: '/pacientes/$patientId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/agenda': typeof AuthenticatedAgendaRoute
   '/pacientes': typeof AuthenticatedPacientesRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/pacientes/$patientId': typeof AuthenticatedPacientesPatientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesByTo {
   '/agenda': typeof AuthenticatedAgendaRoute
   '/pacientes': typeof AuthenticatedPacientesRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/pacientes/$patientId': typeof AuthenticatedPacientesPatientIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +77,25 @@ export interface FileRoutesById {
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/pacientes': typeof AuthenticatedPacientesRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/pacientes_/$patientId': typeof AuthenticatedPacientesPatientIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/agenda' | '/pacientes' | '/painel'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/agenda'
+    | '/pacientes'
+    | '/painel'
+    | '/pacientes/$patientId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/agenda' | '/pacientes' | '/painel'
+  to:
+    | '/'
+    | '/auth'
+    | '/agenda'
+    | '/pacientes'
+    | '/painel'
+    | '/pacientes/$patientId'
   id:
     | '__root__'
     | '/'
@@ -82,6 +104,7 @@ export interface FileRouteTypes {
     | '/_authenticated/agenda'
     | '/_authenticated/pacientes'
     | '/_authenticated/painel'
+    | '/_authenticated/pacientes_/$patientId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pacientes_/$patientId': {
+      id: '/_authenticated/pacientes_/$patientId'
+      path: '/pacientes/$patientId'
+      fullPath: '/pacientes/$patientId'
+      preLoaderRoute: typeof AuthenticatedPacientesPatientIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -141,12 +171,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedPacientesRoute: typeof AuthenticatedPacientesRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedPacientesPatientIdRoute: typeof AuthenticatedPacientesPatientIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedPacientesRoute: AuthenticatedPacientesRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedPacientesPatientIdRoute: AuthenticatedPacientesPatientIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
