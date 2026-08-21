@@ -37,6 +37,7 @@ function Agenda() {
   const { data: sessions = [] } = useQuery(sessionsQuery);
   const { data: patients = [] } = useQuery(patientsQuery);
   const [aberto, setAberto] = useState(false);
+  const [editando, setEditando] = useState<Session | null>(null);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["sessions"] });
@@ -48,6 +49,16 @@ function Agenda() {
       invalidate();
       setAberto(false);
       toast.success("Sessão agendada");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const editar = useMutation({
+    mutationFn: saveSession,
+    onSuccess: () => {
+      invalidate();
+      setEditando(null);
+      toast.success("Sessão atualizada");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -80,7 +91,10 @@ function Agenda() {
       subtitle="Cada sessão carrega horário, modalidade, valor e status de pagamento."
       actions={
         <button
-          onClick={() => setAberto((v) => !v)}
+          onClick={() => {
+            setEditando(null);
+            setAberto((v) => !v);
+          }}
           className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
         >
           {aberto ? "Fechar" : "Nova sessão"}
@@ -93,6 +107,18 @@ function Agenda() {
             patients={patients}
             onSubmit={(values) => criar.mutate(values)}
             pending={criar.isPending}
+          />
+        </div>
+      )}
+
+      {editando && (
+        <div className="mb-8">
+          <SessionForm
+            patients={patients}
+            initial={editando}
+            onSubmit={(values) => editar.mutate(values)}
+            pending={editar.isPending}
+            onCancel={() => setEditando(null)}
           />
         </div>
       )}
@@ -125,6 +151,14 @@ function Agenda() {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-start gap-2">
+                  <SmallButton
+                    onClick={() => {
+                      setAberto(false);
+                      setEditando(s);
+                    }}
+                  >
+                    Editar
+                  </SmallButton>
                   {s.status !== "confirmada" && (
                     <SmallButton
                       onClick={() => atualizar.mutate({ id: s.id, patch: { status: "confirmada" } })}
@@ -194,20 +228,32 @@ export function SessionForm({
   onSubmit,
   pending,
   fixedPatientId,
+  initial,
+  onCancel,
 }: {
   patients: { id: string; nome: string; valor_sessao: number; modalidade: string }[];
   onSubmit: (values: Parameters<typeof saveSession>[0]) => void;
   pending: boolean;
   fixedPatientId?: string;
+  initial?: Session;
+  onCancel?: () => void;
 }) {
-  const [patientId, setPatientId] = useState(fixedPatientId ?? patients[0]?.id ?? "");
-  const [startsAt, setStartsAt] = useState(toInputDateTime());
-  const [duracao, setDuracao] = useState(50);
-  const [modalidade, setModalidade] = useState<(typeof modalidades)[number]>("presencial");
-  const [status, setStatus] = useState<(typeof statusSessao)[number]>("agendada");
-  const [pagamento, setPagamento] = useState<(typeof statusPagamento)[number]>("pendente");
+  const [patientId, setPatientId] = useState(
+    fixedPatientId ?? initial?.patient_id ?? patients[0]?.id ?? "",
+  );
+  const [startsAt, setStartsAt] = useState(toInputDateTime(initial?.starts_at));
+  const [duracao, setDuracao] = useState(initial?.duracao_min ?? 50);
+  const [modalidade, setModalidade] = useState<(typeof modalidades)[number]>(
+    initial?.modalidade ?? "presencial",
+  );
+  const [status, setStatus] = useState<(typeof statusSessao)[number]>(
+    initial?.status ?? "agendada",
+  );
+  const [pagamento, setPagamento] = useState<(typeof statusPagamento)[number]>(
+    initial?.pagamento ?? "pendente",
+  );
   const selecionado = patients.find((p) => p.id === patientId);
-  const [valor, setValor] = useState(Number(selecionado?.valor_sessao ?? 0));
+  const [valor, setValor] = useState(Number(initial?.valor ?? selecionado?.valor_sessao ?? 0));
 
   if (patients.length === 0) {
     return (
@@ -222,6 +268,7 @@ export function SessionForm({
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit({
+          ...(initial ? { id: initial.id } : {}),
           patient_id: patientId,
           starts_at: new Date(startsAt).toISOString(),
           duracao_min: duracao,
@@ -332,14 +379,23 @@ export function SessionForm({
         />
       </label>
 
-      <div className="flex items-end md:col-span-2">
+      <div className="flex items-end gap-2 md:col-span-2">
         <button
           type="submit"
           disabled={pending}
           className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
         >
-          {pending ? "Salvando..." : "Agendar sessão"}
+          {pending ? "Salvando..." : initial ? "Salvar alterações" : "Agendar sessão"}
         </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded bg-muted px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent"
+          >
+            Cancelar
+          </button>
+        )}
       </div>
     </form>
   );

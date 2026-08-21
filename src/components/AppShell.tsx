@@ -57,7 +57,10 @@ export function AppShell({
           </div>
 
           <div className="mt-auto border-t border-border p-4">
-            <div className="flex items-center gap-3 rounded-lg bg-muted p-2">
+            <Link
+              to="/perfil"
+              className="flex items-center gap-3 rounded-lg bg-muted p-2 transition-colors hover:bg-accent"
+            >
               <div className="flex size-9 items-center justify-center rounded-full bg-accent text-xs font-medium text-primary">
                 {(profile?.nome || "P").slice(0, 2).toUpperCase()}
               </div>
@@ -69,7 +72,7 @@ export function AppShell({
                   {profile?.crp ? `CRP ${profile.crp}` : "CRP não informado"}
                 </span>
               </div>
-            </div>
+            </Link>
             <button
               onClick={sair}
               className="mt-3 w-full rounded-md px-3 py-2 text-left text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

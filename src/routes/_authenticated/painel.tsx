@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { AppShell, Panel, Stat, Tag, pagamentoTone } from "@/components/AppShell";
 import {
   brl,
@@ -11,6 +12,7 @@ import {
   patientsQuery,
   profileQuery,
   sessionsQuery,
+  weekRange,
 } from "@/lib/psicohub";
 
 export const Route = createFileRoute("/_authenticated/painel")({
@@ -30,8 +32,9 @@ function Painel() {
   const { data: profile } = useQuery(profileQuery);
   const { data: sessions = [], isLoading } = useQuery(sessionsQuery);
   const { data: patients = [] } = useQuery(patientsQuery);
+  const [periodo, setPeriodo] = useState<"semana" | "mes">("mes");
 
-  const { start, end } = monthRange();
+  const { start, end } = periodo === "semana" ? weekRange() : monthRange();
   const doMes = sessions.filter((s) => {
     const d = new Date(s.starts_at);
     return d >= start && d < end && s.status !== "cancelada";
@@ -79,10 +82,30 @@ function Painel() {
         </>
       }
     >
+      <div className="mb-4 flex gap-1">
+        {(["semana", "mes"] as const).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriodo(p)}
+            className={`rounded px-3 py-1.5 text-[11px] font-medium transition-colors ${
+              periodo === p
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-secondary-foreground hover:bg-accent"
+            }`}
+          >
+            {p === "semana" ? "Esta semana" : "Este mês"}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Stat label="Faturamento do mês" value={brl(faturado)} hint={`A receber: ${brl(aReceber)}`} />
         <Stat
-          label="Sessões do mês"
+          label={periodo === "semana" ? "Faturamento da semana" : "Faturamento do mês"}
+          value={brl(faturado)}
+          hint={`A receber: ${brl(aReceber)}`}
+        />
+        <Stat
+          label={periodo === "semana" ? "Sessões da semana" : "Sessões do mês"}
           value={`${realizadas} / ${doMes.length}`}
           hint="Realizadas / agendadas"
         />

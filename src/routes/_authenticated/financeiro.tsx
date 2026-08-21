@@ -31,6 +31,7 @@ function Financeiro() {
   const qc = useQueryClient();
   const { data: sessions = [] } = useQuery(sessionsQuery);
   const [filtro, setFiltro] = useState<"todos" | Session["pagamento"]>("todos");
+  const [mesOffset, setMesOffset] = useState(0);
 
   const marcar = useMutation({
     mutationFn: ({ id, pagamento }: { id: string; pagamento: Session["pagamento"] }) =>
@@ -42,7 +43,13 @@ function Financeiro() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const { start, end } = monthRange();
+  const hoje = new Date();
+  const mesSelecionado = new Date(hoje.getFullYear(), hoje.getMonth() + mesOffset, 1);
+  const rotuloMes = mesSelecionado
+    .toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
+    .replace(/^./, (c) => c.toUpperCase());
+
+  const { start, end } = monthRange(mesSelecionado);
   const doMes = sessions.filter((s) => {
     const d = new Date(s.starts_at);
     return d >= start && d < end && s.status !== "cancelada";
@@ -56,6 +63,10 @@ function Financeiro() {
   const inadimplencia = previsto > 0 ? Math.round((atrasado / previsto) * 100) : 0;
 
   const lista = [...sessions]
+    .filter((s) => {
+      const d = new Date(s.starts_at);
+      return d >= start && d < end;
+    })
     .filter((s) => (filtro === "todos" ? true : s.pagamento === filtro))
     .sort((a, b) => b.starts_at.localeCompare(a.starts_at))
     .slice(0, 60);
@@ -63,10 +74,36 @@ function Financeiro() {
   return (
     <AppShell
       title="Financeiro"
-      subtitle="Faturamento do mês corrente, pendências e conciliação sessão a sessão."
+      subtitle="Faturamento do mês selecionado, pendências e conciliação sessão a sessão."
     >
+      <div className="mb-6 flex items-center gap-3">
+        <button
+          onClick={() => setMesOffset((v) => v - 1)}
+          className="rounded border border-border bg-surface px-3 py-1.5 text-sm transition-colors hover:bg-muted"
+          aria-label="Mês anterior"
+        >
+          ‹
+        </button>
+        <span className="min-w-[10ch] text-center text-sm font-medium">{rotuloMes}</span>
+        <button
+          onClick={() => setMesOffset((v) => v + 1)}
+          className="rounded border border-border bg-surface px-3 py-1.5 text-sm transition-colors hover:bg-muted"
+          aria-label="Próximo mês"
+        >
+          ›
+        </button>
+        {mesOffset !== 0 && (
+          <button
+            onClick={() => setMesOffset(0)}
+            className="text-[11px] font-medium text-primary hover:underline"
+          >
+            Voltar para o mês atual
+          </button>
+        )}
+      </div>
+
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Stat label="Previsto no mês" value={brl(previsto)} hint={`${doMes.length} sessões`} />
+        <Stat label={`Previsto em ${rotuloMes}`} value={brl(previsto)} hint={`${doMes.length} sessões`} />
         <Stat label="Recebido" value={brl(recebido)} hint="Pagamentos confirmados" />
         <Stat label="A receber" value={brl(pendente)} hint="Aguardando pagamento" />
         <Stat label="Inadimplência" value={`${inadimplencia}%`} hint={brl(atrasado)} />
@@ -88,7 +125,7 @@ function Financeiro() {
         ))}
       </div>
 
-      <Panel title={`Lançamentos (${lista.length})`}>
+      <Panel title={`Lançamentos em ${rotuloMes} (${lista.length})`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>

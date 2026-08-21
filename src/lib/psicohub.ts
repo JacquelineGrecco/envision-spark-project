@@ -45,6 +45,16 @@ export const profileQuery = {
   },
 };
 
+export async function updateProfile(input: {
+  nome: string;
+  crp: string | null;
+  meta_horas_semanais: number;
+}) {
+  const uid = await currentUserId();
+  const { error } = await supabase.from("profiles").update(input).eq("id", uid);
+  if (error) throw error;
+}
+
 export const patientsQuery = {
   queryKey: ["patients"],
   queryFn: async (): Promise<Patient[]> => {
@@ -156,6 +166,14 @@ export async function deleteSession(id: string) {
 export function monthRange(base = new Date()) {
   const start = new Date(base.getFullYear(), base.getMonth(), 1);
   const end = new Date(base.getFullYear(), base.getMonth() + 1, 1);
+  return { start, end };
+}
+
+export function weekRange(base = new Date()) {
+  const day = base.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const start = new Date(base.getFullYear(), base.getMonth(), base.getDate() + diffToMonday);
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
   return { start, end };
 }
 
