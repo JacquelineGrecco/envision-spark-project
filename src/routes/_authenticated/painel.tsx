@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell, Panel, Stat, Tag, pagamentoTone } from "@/components/AppShell";
+import { CalendarView } from "@/components/CalendarView";
 import {
   brl,
   dia,
@@ -115,6 +116,10 @@ function Painel() {
           value={String(semEvolucao)}
           hint="Sessões realizadas sem nota"
         />
+      </div>
+
+      <div className="mb-10">
+        <CalendarView sessions={sessions} />
       </div>
 
       <div className="grid grid-cols-12 gap-8">
