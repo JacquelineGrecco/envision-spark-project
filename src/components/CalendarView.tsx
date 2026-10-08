@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, type Dispatch, type SetStateAction } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { brl, hora, type SessionWithPatient } from "@/lib/psicohub";
 
-type ViewMode = "mes" | "semana" | "dia";
+export type ViewMode = "mes" | "semana" | "dia";
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const HOUR_START = 7;
@@ -20,7 +20,7 @@ function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
-function startOfDay(date: Date) {
+export function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
@@ -181,9 +181,19 @@ function TimeGridBackground() {
   );
 }
 
-export function CalendarView({ sessions }: { sessions: SessionWithPatient[] }) {
-  const [view, setView] = useState<ViewMode>("mes");
-  const [cursor, setCursor] = useState(() => startOfDay(new Date()));
+export function CalendarView({
+  sessions,
+  view,
+  setView,
+  cursor,
+  setCursor,
+}: {
+  sessions: SessionWithPatient[];
+  view: ViewMode;
+  setView: (view: ViewMode) => void;
+  cursor: Date;
+  setCursor: Dispatch<SetStateAction<Date>>;
+}) {
   const hoje = startOfDay(new Date());
 
   const navigate = (delta: number) => {

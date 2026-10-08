@@ -1,8 +1,7 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -83,79 +82,62 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Não foi possível entrar com o Google");
-      return;
-    }
-    if (result.redirected) return;
-    router.navigate({ to: "/painel" });
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex items-center gap-2">
+        <Link to="/" className="mb-8 flex items-center gap-2">
           <div className="flex size-6 items-center justify-center rounded bg-primary">
             <div className="size-1.5 rounded-full bg-primary-foreground" />
           </div>
           <span className="font-medium tracking-tight">PsicoHub</span>
-        </div>
+        </Link>
 
-        <h1 className="text-xl font-medium">
-          {modo === "entrar" ? "Entrar no consultório" : "Criar meu consultório"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {modo === "entrar"
-            ? "Use o e-mail cadastrado para acessar sua agenda e prontuários."
-            : "Leva menos de um minuto e seus dados ficam restritos à sua conta."}
-        </p>
+        <div className="rounded-xl bg-surface p-8 shadow-ring">
+          <h1 className="text-xl font-medium">
+            {modo === "entrar" ? "Entrar no consultório" : "Criar meu consultório"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {modo === "entrar"
+              ? "Use o e-mail cadastrado para acessar sua agenda e prontuários."
+              : "Leva menos de um minuto e seus dados ficam restritos à sua conta."}
+          </p>
 
-        <form onSubmit={submit} className="mt-8 space-y-4">
-          {modo === "criar" && (
-            <>
-              <Field label="Nome" value={nome} onChange={setNome} required />
-              <Field label="CRP" value={crp} onChange={setCrp} placeholder="06/123456" />
-            </>
-          )}
-          <Field label="E-mail" type="email" value={email} onChange={setEmail} required />
-          <Field label="Senha" type="password" value={senha} onChange={setSenha} required />
+          <form onSubmit={submit} className="mt-8 space-y-4">
+            {modo === "criar" && (
+              <>
+                <Field label="Nome" value={nome} onChange={setNome} required />
+                <Field label="CRP" value={crp} onChange={setCrp} placeholder="06/123456" />
+              </>
+            )}
+            <Field label="E-mail" type="email" value={email} onChange={setEmail} required />
+            <Field label="Senha" type="password" value={senha} onChange={setSenha} required />
 
-          {modo === "entrar" && (
+            {modo === "entrar" && (
+              <button
+                type="button"
+                onClick={recuperarSenha}
+                className="block text-xs text-muted-foreground hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            )}
+
             <button
-              type="button"
-              onClick={recuperarSenha}
-              className="block text-xs text-muted-foreground hover:underline"
+              type="submit"
+              disabled={carregando}
+              className="w-full rounded bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
             >
-              Esqueci minha senha
+              {carregando ? "Aguarde..." : modo === "entrar" ? "Entrar" : "Criar conta"}
             </button>
-          )}
+          </form>
 
           <button
-            type="submit"
-            disabled={carregando}
-            className="w-full rounded bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
+            onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}
+            className="mt-6 text-xs font-medium text-primary hover:underline"
           >
-            {carregando ? "Aguarde..." : modo === "entrar" ? "Entrar" : "Criar conta"}
+            {modo === "entrar" ? "Ainda não tenho conta" : "Já tenho conta"}
           </button>
-        </form>
-
-        <button
-          onClick={google}
-          className="mt-3 w-full rounded border border-border bg-surface px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
-        >
-          Continuar com o Google
-        </button>
-
-        <button
-          onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}
-          className="mt-6 text-xs font-medium text-primary hover:underline"
-        >
-          {modo === "entrar" ? "Ainda não tenho conta" : "Já tenho conta"}
-        </button>
+        </div>
       </div>
     </div>
   );
