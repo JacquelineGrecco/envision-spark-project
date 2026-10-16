@@ -41,7 +41,7 @@ function AuthPage() {
     setEmailNaoConfirmado(false);
     try {
       if (modo === "criar") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password: senha,
           options: {
@@ -50,7 +50,13 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Conta criada. Bem-vindo ao PsicoHub.");
+        if (data.session) {
+          toast.success("Conta criada. Bem-vindo ao PsicoHub.");
+          router.navigate({ to: "/painel" });
+        } else {
+          toast.success("Conta criada. Confirme seu e-mail para entrar.");
+          setModo("entrar");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
         if (error) {
@@ -59,8 +65,8 @@ function AuthPage() {
           }
           throw error;
         }
+        router.navigate({ to: "/painel" });
       }
-      router.navigate({ to: "/painel" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível continuar");
     } finally {

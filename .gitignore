@@ -20,6 +20,15 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Vercel
+.vercel
+
+# Env (secrets — never commit; see .env for local values)
+.env
+
+# Supabase CLI local cache
+supabase/.temp
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
