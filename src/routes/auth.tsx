@@ -27,6 +27,7 @@ function AuthPage() {
   const [nome, setNome] = useState("");
   const [crp, setCrp] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [emailNaoConfirmado, setEmailNaoConfirmado] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -37,6 +38,7 @@ function AuthPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setCarregando(true);
+    setEmailNaoConfirmado(false);
     try {
       if (modo === "criar") {
         const { error } = await supabase.auth.signUp({
@@ -51,11 +53,39 @@ function AuthPage() {
         toast.success("Conta criada. Bem-vindo ao PsicoHub.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
-        if (error) throw error;
+        if (error) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            setEmailNaoConfirmado(true);
+          }
+          throw error;
+        }
       }
       router.navigate({ to: "/painel" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível continuar");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const reenviarConfirmacao = async () => {
+    if (!email) {
+      toast.error("Informe seu e-mail para reenviar a confirmação");
+      return;
+    }
+    setCarregando(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) throw error;
+      toast.success("Reenviamos o e-mail de confirmação.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Não foi possível reenviar o e-mail de confirmação",
+      );
     } finally {
       setCarregando(false);
     }
@@ -122,6 +152,19 @@ function AuthPage() {
               </button>
             )}
 
+            {modo === "entrar" && emailNaoConfirmado && (
+              <div className="rounded border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
+                <p>Seu e-mail ainda não foi confirmado.</p>
+                <button
+                  type="button"
+                  onClick={reenviarConfirmacao}
+                  className="mt-1 font-medium underline"
+                >
+                  Reenviar e-mail de confirmação
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={carregando}
@@ -132,7 +175,10 @@ function AuthPage() {
           </form>
 
           <button
-            onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}
+            onClick={() => {
+              setModo(modo === "entrar" ? "criar" : "entrar");
+              setEmailNaoConfirmado(false);
+            }}
             className="mt-6 text-xs font-medium text-primary hover:underline"
           >
             {modo === "entrar" ? "Ainda não tenho conta" : "Já tenho conta"}
